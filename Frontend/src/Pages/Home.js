@@ -8,11 +8,10 @@ import { ANOMALY_ICONS, MapUpdater } from '../Components/MapUpdator';
 import { useNavigate } from 'react-router-dom';
 import { ANOMALY_TYPE } from '../Components/const';
 
-const socket = io("http://localhost:3002");
+const socket = io(process.env.REACT_APP_SOCKET_URL);
 
 export const formatSensorData = (datalist) => {
     const updatedDat = datalist.map(item => ({ ...item, id: item._id, }));
-    console.log(updatedDat);
     return updatedDat
 }
 
@@ -70,7 +69,6 @@ function Home() {
     const navigate = useNavigate(); // Initialize useNavigate
 
     useEffect(() => {
-        console.log(sensorData)
         socket.on('initialData', (initialData) => {
             setSensorData(formatSensorData(initialData));
         });

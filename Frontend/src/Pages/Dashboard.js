@@ -28,7 +28,7 @@ ChartJS.register(
 );
 
 
-const socket = io("http://localhost:3002");
+const socket = io(process.env.REACT_APP_SOCKET_URL);
 
 const columns = [
     {
@@ -84,7 +84,6 @@ const Dashboard = () => {
         socket.emit('requestInitialData', { towerId });
 
         socket.on('sendInitialData', (initialData) => {
-            console.log("Initial Data:", initialData)
             const temp = []
             const fuel = []
             const timestamp = []
@@ -102,7 +101,6 @@ const Dashboard = () => {
         });
 
         socket.on(`sensorUpdate:${towerId}`, (update) => {
-            console.log("Update Data ", update);
             setSensorData((prevData) => ({
                 temperature: [...prevData.temperature, update.temperature],
                 fuel: [...prevData.fuel, update.fuelStatus],
