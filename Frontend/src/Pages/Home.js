@@ -4,20 +4,70 @@ import 'leaflet/dist/leaflet.css';
 import DataTable from '../Components/DataTable';
 import io from 'socket.io-client';
 import { Box, Card, CardContent, Switch, Typography } from '@mui/material';
-import { MapUpdater } from '../Components/MapUpdator';
+import { ANOMALY_ICONS, MapUpdater } from '../Components/MapUpdator';
+import { useNavigate } from 'react-router-dom';
+import { ANOMALY_TYPE } from '../Components/const';
 
 const socket = io("http://localhost:3002");
 
-const formatSensorData = (datalist) => {
+export const formatSensorData = (datalist) => {
     const updatedDat = datalist.map(item => ({ ...item, id: item._id, }));
-    console.log(updatedDat)
+    console.log(updatedDat);
     return updatedDat
-
 }
+
+const columns = [
+    { field: 'towerId', headerName: 'Name', width: 120 },
+    {
+        field: 'location',
+        headerName: 'Location',
+        width: 150,
+        valueGetter: (params) => {
+            return `${params.lat}, ${params.long}`
+        },
+    },
+    {
+        field: 'temperature',
+        headerName: 'Temp (°C)',
+        type: 'number',
+        width: 80,
+    },
+    {
+        field: 'fuelStatus',
+        headerName: 'Fuel (L)',
+        type: 'number',
+        width: 80,
+    },
+    {
+        field: 'powerSource',
+        headerName: 'Power Source',
+        width: 100,
+    },
+    {
+        field: 'isAnomaly',
+        headerName: 'Anomaly',
+        width: 100,
+        valueGetter: (value) => `${value ? "Yes" : "No"}`,
+    },
+    {
+        field: 'unchangedUptime',
+        headerName: 'Uptime (sec)',
+        width: 100,
+    },
+    {
+        field: 'anomalyType',
+        headerName: 'Anomaly Type',
+        width: 100,
+        valueGetter: (value) => `${value ? ANOMALY_TYPE[value] : "No Anomaly"}`,
+    },
+
+];
+
 function Home() {
     const [sensorData, setSensorData] = useState([]);
     const [mapCenter, setMapCenter] = useState([26.907524, 75.739639]);
     const [isAutomaticMap, setIsAutomaticMap] = useState(true)
+    const navigate = useNavigate(); // Initialize useNavigate
 
     useEffect(() => {
         console.log(sensorData)
@@ -38,7 +88,6 @@ function Home() {
         };
     }, [isAutomaticMap]);
 
-
     return (
         <div>
             <Typography variant="h5" component="div" textAlign="center">
@@ -51,8 +100,17 @@ function Home() {
                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                             {sensorData.map((data, idx) => (
                                 data.isAnomaly && data.location &&
-                                <Marker key={idx} position={[data.location.lat, data.location.long]}>
-                                    <Popup>A sensor data point: {data.towerId}</Popup>
+                                <Marker
+                                    key={idx}
+                                    position={[data.location.lat, data.location.long]}
+                                    icon={ANOMALY_ICONS[data.anomalyType]}
+                                    eventHandlers={{
+                                        click: () => navigate(`/dashboard/${data.towerId}`),
+                                    }}
+                                >
+                                    <Popup>
+                                        {data.towerId}
+                                    </Popup>
                                 </Marker>
                             ))}
 
@@ -62,15 +120,15 @@ function Home() {
                     </Box>
                     <Box>
                         <Typography>
-                            Show latest Anomaly
+                            Automatically redirect to latest Anomaly
                             <Switch
                                 checked={isAutomaticMap}
                                 onChange={() => setIsAutomaticMap(!isAutomaticMap)}
-                                inputProps={{ 'aria-label': 'controlled' }}
+                                inputProps={{ 'aria-label': 'automaticRedirect' }}
                             />
                         </Typography>
 
-                        <DataTable sensorData={sensorData} />
+                        <DataTable sensorData={sensorData} columns={columns} />
                     </Box>
                 </CardContent>
             </Card>

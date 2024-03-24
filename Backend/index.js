@@ -12,6 +12,7 @@ const server = http.createServer(app);
 
 // Configure CORS for Socket.IO
 const { init } = require('./src/services/io');
+const SensorData = require('./src/models/SensorData');
 const io = init(server);
 
 const port = 3002;
@@ -24,8 +25,22 @@ connectRabbitMQ();
 
 io.on('connection', async (socket) => {
     CUSTOM_LOG.green("A user connected");
+
     const allSensorData = await fetchAllSensorData();
     socket.emit('initialData', allSensorData);
+
+    socket.on('requestInitialData', async ({ towerId }) => {
+        if (!towerId) {
+            CUSTOM_LOG.red("No towerId provided for initial data request.");
+            return;
+        }
+        try {
+            const towerData = await SensorData.find({ towerId: towerId });
+            socket.emit('sendInitialData', towerData);
+        } catch (error) {
+            console.error('Failed to fetch initial sensor data:', error);
+        }
+    });
 
     socket.on('disconnect', () => {
         CUSTOM_LOG.red('user disconnected');

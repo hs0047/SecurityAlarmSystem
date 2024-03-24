@@ -38,6 +38,7 @@ async function processSensorData(data) {
         await sensorData.save();
         const io = getIO();
         io.emit('sensorUpdate', sensorData);
+        io.emit(`sensorUpdate:${sensorData.towerId}`, sensorData);
         console.log('Sensor data processed and saved', sensorData);
     } catch (error) {
         console.error('Error processing sensor data:', error);
@@ -46,7 +47,6 @@ async function processSensorData(data) {
 
 async function fetchAllSensorData() {
     try {
-        // Fetch all sensor data from the database
         const data = await SensorData.find({});
         return data;
     } catch (err) {
